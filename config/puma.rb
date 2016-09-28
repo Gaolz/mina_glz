@@ -1,34 +1,27 @@
-# Puma can serve each request in a thread from an internal thread pool.
-# The `threads` method setting takes two numbers a minimum and maximum.
-# Any libraries that use thread pools should be configured to match
-# the maximum value specified for Puma. Default is set to 5 threads for minimum
-# and maximum, this matches the default thread size of Active Record.
+app_path = File.expand_path( File.join(File.dirname(__FILE__), '..'))
+# Change to match your CPU core count
+workers 1
 #
-#!/usr/bin/env puma
+# # Min and Max threads per worker
+threads 1, 6
 #
-##rails的运行环境
-environment 'production'
-threads 1, 16
-workers 2
+# # Default to production
+rails_env = ENV['RAILS_ENV'] || "production"
+environment rails_env
 #
-##项目名
-app_name = "mina_glz"
-##项目路径
-application_path = "/home/glz/#{app_name}"
-##这里一定要配置为项目路径下地current
-directory "#{application_path}/current"
+# # Set up socket location
+bind "unix://#{app_path}/tmp/sockets/pumactl.sock"
 #
-##下面都是 puma的配置项
-pidfile "#{application_path}/shared/tmp/pids/puma.pid"
-state_path "#{application_path}/shared/tmp/sockets/puma.state"
-stdout_redirect "#{application_path}/shared/log/puma.stdout.log", "#{application_path}/shared/log/puma.stderr.log"
-bind "unix://#{application_path}/shared/tmp/sockets/#{app_name}.sock"
-activate_control_app 
-
-##后台运行
-daemonize true
-on_restart do
-  puts 'On restart...'
+# # Logging
+stdout_redirect "#{app_path}/log/puma.stdout.log", "#{app_path}/log/puma.stderr.log", true
+#
+# # Set master PID and state locations
+pidfile "#{app_path}/pids/puma.pid"
+state_path "#{app_path}/tmp/sockets/puma.state"
+activate_control_app
+#
+on_worker_boot do
+  require "active_record"
+  ActiveRecord::Base.connection.disconnect! rescue ActiveRecord::ConnectionNotEstablished
+  ActiveRecord::Base.establish_connection(YAML.load_file("#{app_path}/config/database.yml")[rails_env])
 end
-preload_app!
-
