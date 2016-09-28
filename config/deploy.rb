@@ -15,6 +15,7 @@ set :domain, 'glz@188.166.233.94'
 set :deploy_to, '/home/glz/mina_glz'
 set :repository, 'git@github.com:Gaolz/mina_glz.git'
 set :branch, 'master'
+set :rbenv_path, '/home/glz/.rbenv'
 
 # Optional settings:
 #   set :user, 'foobar'          # Username in the server to SSH to.
@@ -27,7 +28,6 @@ set :shared_files, fetch(:shared_files, []).push('config/database.yml', 'config/
 
 set :puma_config, -> { "#{deploy_to}/#{current_path}/config/puma.rb" }
 
-set :rbenv_path, '/home/glz/.rbenv/bin/rbenv'
 
 # This task is the environment that is loaded all remote run commands, such as
 # `mina deploy` or `mina rake`.
