@@ -12,7 +12,7 @@ require 'mina/bundler'
 #   branch       - Branch name to deploy. (needed by mina/git)
 
 set :domain, '188.166.233.94'
-set :deploy_to, '/home/glz/mina'
+set :deploy_to, '/home/glz/mina_glz'
 set :repository, 'git@github.com:Gaolz/mina_glz.git'
 set :branch, 'master'
 
@@ -23,7 +23,7 @@ set :branch, 'master'
 
 # They will be linked in the 'deploy:link_shared_paths' step.
 set :shared_dirs, fetch(:shared_dirs, []).push('config')
-set :shared_files, fetch(:shared_files, []).push('config/database.yml', 'config/secrets.yml', 'tmp/pids', 'tmp/sockets')
+set :shared_files, fetch(:shared_files, []).push('config/database.yml', 'config/secrets.yml', 'tmp/pids', 'tmp/sockets', 'log')
 
 set :puma_config, -> { "#{deploy_to}/#{current_path}/config/puma.rb" }
 
@@ -48,6 +48,19 @@ task :setup do
   queue! %(chmod g+rx,u+rwx "#{deploy_to}/#{shared_path}/tmp/sockets")
   queue! %(mkdir -p "#{deploy_to}/#{shared_path}/tmp/pids")
   queue! %(chmod g+rx,u+rwx "#{deploy_to}/#{shared_path}/tmp/pids")
+  queue! %[mkdir -p "#{deploy_to}/#{shared_path}/log"]
+  queue! %[chmod g+rx,u+rwx "#{deploy_to}/#{shared_path}/log"]
+
+  queue! %[mkdir -p "#{deploy_to}/#{shared_path}/config"]
+  queue! %[chmod g+rx,u+rwx "#{deploy_to}/#{shared_path}/config"]
+
+  queue! %[mkdir -p "#{deploy_to}/#{shared_path}/puma"]
+  queue! %[chmod g+rx,u+rwx "#{deploy_to}/#{shared_path}/puma"]
+
+  queue! %[touch "#{deploy_to}/#{shared_path}/config/database.yml"]
+  queue! %[touch "#{deploy_to}/#{shared_path}/config/secrets.yml"]
+  queue! %[touch "#{deploy_to}/#{shared_path}/config/puma.rb"]
+  queue  %[echo "-----> Be sure to edit '#{deploy_to}/#{shared_path}/config/database.yml', 'secrets.yml' and puma.rb."]
 end
 
 desc "Deploys the current version to the server."
@@ -65,10 +78,10 @@ task :deploy do
     invoke :'deploy:cleanup'
 
     on :launch do
-      in_path(fetch(:current_path)) do
-        command %{mkdir -p tmp/}
-        command %{touch tmp/restart.txt}
-      end
+      # in_path(fetch(:current_path)) do
+      #   command %{mkdir -p tmp/}
+      #   command %{touch tmp/restart.txt}
+      # end
       invoke :'puma:phased_restart'
     end
   end
