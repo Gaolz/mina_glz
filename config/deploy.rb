@@ -76,6 +76,49 @@ task :deploy => :environment do
   end
 end
 
-# For help in making your deploy script, see the Mina documentation:
-#
-#  - https://github.com/mina-deploy/mina/docs
+namespace :puma do
+  set :puma_env, fetch(:rails_env, 'production')
+  set :puma_config, "#{deploy_to}/shared/config/puma.rb"
+  set :puma_socket, "#{deploy_to}/shared/tmp/sockets/mina_glz.sock"
+  set :puma_pid, "#{deploy_to}/shared/tmp/pids/puma.pid"
+  set :puma_cmd, "bundle exec puma"
+
+  desc "start puma"
+  task start: :environment do
+    queue 'echo "-----> start Puma"'
+    queue! %[
+      if [ -e '#{puma_pid}' ]; then
+        echo 'Puma 已经运行，如需重启请使用‘mina puma:restart’';
+      else
+        cd #{deploy_to}/#{current_path} && #{puma_cmd} -C #{puma_config}
+      fi
+    ]
+  end
+
+  desc "stop puma"
+  task stop: :environment do
+    queue 'echo "------> 关闭 Puma"'
+    queue! %[
+      if [ -e '#{puma_pid}' ]; then
+        kill -s SIGTERM `cat #{puma_pid}`
+        rm -f '#{puma_pid}'
+      else
+        echo '成功关闭puma服务';
+      fi
+    ]
+  end
+
+  desc "restart puma"
+  task restart: :environment do
+    queue 'echo "------> 重启 Puma"'
+    queue! %[
+      if [ -e '#{puma_pid}' ]; then
+        cd #{deploy_to}/#{current_path} && bundle exec pumactl -F #{deploy_to}/shared/config/puma.rb restart
+        echo "向 puma 服务发送了 USR2 重启信号."
+      else
+        echo "puma 服务不存在，现在开启puma服务"
+        cd #{deploy_to}/#{current_path} && #{puma_cmd} -C #{puma_config}
+      fi
+    ]
+  end
+end
