@@ -11,7 +11,7 @@ require 'mina/bundler'
 #   repository   - Git repo to clone from. (needed by mina/git)
 #   branch       - Branch name to deploy. (needed by mina/git)
 
-set :domain, '188.166.233.94'
+set :domain, 'glz@188.166.233.94'
 set :deploy_to, '/home/glz/mina_glz'
 set :repository, 'git@github.com:Gaolz/mina_glz.git'
 set :branch, 'master'
